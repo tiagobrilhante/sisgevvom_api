@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Assunto extends Model
 {
     use SoftDeletes;
-
+    
     protected $fillable = ['nome_assunto', 'ordem_exibicao', 'acessos'];
 
     protected $perPage = 6;

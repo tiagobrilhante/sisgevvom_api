@@ -1,6 +1,6 @@
 <?php
 
-/** @var \Laravel\Lumen\Routing\Router $router */
+/** @var Router $router */
 
 /*
 |--------------------------------------------------------------------------
@@ -13,10 +13,12 @@
 |
 */
 
-/** @var \Laravel\Lumen\Routing\Router $router */
+/** @var Router $router */
+
+use Laravel\Lumen\Routing\Router;
 
 $router->get('/', function () use ($router) {
-    return '<h1>API EBTotem</h1> <b>Framework da Api:</b> ' . $router->app->version() . '<br> <b>Versão da api:</b> 1.2<br><b>Desenvolvedor: </b> TC Brilhante <br>Todos os Direitos dessa API pertencem ao Exército Brasileiro. <br> Todo o poder emana do código.';
+    return '<h1>API SisGeVVOm</h1> <b>Framework da Api:</b> ' . $router->app->version() . '<br> <b>Versão da api:</b> 1.2<br><b>Desenvolvedor: </b> TC Brilhante <br>Todos os Direitos dessa API pertencem ao Exército Brasileiro. <br> Todo o poder emana do código.';
 });
 
 $router->post('/api/login', 'TokenController@gerarToken');
