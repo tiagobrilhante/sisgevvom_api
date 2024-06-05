@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Endereco;
+use App\Models\Telefone;
 use App\Models\User;
 use App\Models\UserPerfilBasico;
 use App\Models\UserPerfilS;
@@ -18,7 +20,7 @@ class UserController extends Controller
     //lista os usuários
     public function index()
     {
-        return User::all();
+        return User::all()->load('postograd', 'endereco', 'telefones', 'secoes');
     }
 
     // retorna se o usuário pode ou não usar o cpf ao se cadastrar / editar
@@ -31,6 +33,28 @@ class UserController extends Controller
             $teste = User::where('email', $request['email'])->where('id', '!=', $id_usuario)->count();
         }
         return $teste;
+    }
+
+    public function cpfExist(Request $request)
+    {
+        $id_usuario = $request['id'];
+        if ($id_usuario === null) {
+            $teste = User::where('cpf', $request['cpf'])->count();
+        } else {
+            $teste = User::where('cpf', $request['cpf'])->where('id', '!=', $id_usuario)->count();
+        }
+        return $teste;
+    }
+
+    //limpa os . e - de um cpf para resetar senha
+    function limpaCPF_CNPJ($valor)
+    {
+        $valor = trim($valor);
+        $valor = str_replace(".", "", $valor);
+        $valor = str_replace(",", "", $valor);
+        $valor = str_replace("-", "", $valor);
+        $valor = str_replace("/", "", $valor);
+        return $valor;
     }
 
     // altera a senha de um usuário resetado
@@ -50,17 +74,65 @@ class UserController extends Controller
         $user->save();
     }
 
-
     // cria um novo usuário
     public function createUser(Request $request)
     {
+        if ($request['tipoCadastro'] === 'Simplificado') {
+            $usuario=  User::create([
+                'cpf' => $request['cpf'],
+                'password' => Hash::make($request['cpf']),
+                'reset' => 1,
+            ]);
 
-        return User::create([
-            'email' => $request['email'],
-            'nome' => $request['nome'],
-            'password' => Hash::make($request['password'])
-        ]);
+            // Atualizar as secoes
+            $usuario->secoes()->sync($request['secoes']);
 
+            return $usuario->load('postograd', 'endereco', 'telefones', 'secoes');
+
+        }  else {
+
+            $usuario=  User::create([
+                'cpf' => $request['cpf'],
+                'data_nasc' => $request['data_nasc'],
+                'data_praca' => $request['data_praca'],
+                'data_pronto_om' => $request['data_pronto_om'],
+                'email' => $request['email'],
+                'idt' => $request['idt'],
+                'nome_completo' => $request['nome_completo'],
+                'nome_guerra' => $request['nome_guerra'],
+                'posto_grad_id' => $request['posto_grad_id'],
+                'sexo' => $request['sexo'],
+                'password' => Hash::make($request['cpf']),
+                'reset' => 1,
+            ]);
+
+            $usuario->secoes()->sync($request['secoes']);
+
+            foreach ($request['telCtt'] as $telctt) {
+                if ($telctt['numero'] !== '' && $telctt['numero'] !== null && $telctt['numero'] !== 'null') {
+                    Telefone::create([
+                        'numero'=>$telctt['numero'],
+                        'funcional'=>$telctt['funcional'],
+                        'user_id'=>$usuario->id
+                    ]);
+                }
+            }
+
+            Endereco::create([
+                'rua'=>$request['endereco']['rua'],
+                'numero'=>$request['endereco']['numero'],
+                'complemento'=>$request['endereco']['complemento'],
+                'bairro'=>$request['endereco']['bairro'],
+                'cidade'=>$request['endereco']['cidade'],
+                'estado'=>$request['endereco']['estado'],
+                'cep'=>$request['endereco']['cep'],
+                'user_id'=>$usuario->id,
+            ]);
+
+            return $usuario->load('postograd', 'endereco', 'telefones', 'secoes');
+
+
+        }
     }
 
     // altera um usuário
@@ -109,6 +181,17 @@ class UserController extends Controller
             return response()->json('', 204);
         }
 
+    }
+
+    // reseta a senha de um usuário
+    public function resetaSenha(Request $request)
+    {
+        $user = User::find($request['id']);
+        $user->password = Hash::make($this->limpaCPF_CNPJ($user->cpf));
+        $user->reset = 1;
+        $user->save();
+
+        return $user->load('postograd', 'endereco', 'telefones', 'secoes');
     }
 
 }

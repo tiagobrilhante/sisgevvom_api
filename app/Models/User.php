@@ -16,20 +16,28 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     use SoftDeletes;
 
-    protected $table = 'users';
-
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'email',
-        'nome',
+        'cpf',
         'password',
+        'nome_completo',
+        'sexo',
+        'nome_guerra',
+        'posto_grad_id',
+        'data_nasc',
+        'data_praca',
+        'data_pronto_om',
+        'email',
+        'reset',
     ];
 
-    protected $appends = ['firstName'];
+    protected $table = 'users';
+
+    protected $appends = ['nomeMilitar'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -41,11 +49,52 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     ];
 
 
-    public function getFirstNameAttribute()
+    public function postograd()
     {
-        return
-            explode(" ", $this->nome)[0];
+        return $this->belongsTo(PostoGrad::class, 'posto_grad_id', 'id');
+
     }
+    public function endereco()
+    {
+        return $this->hasOne(Endereco::class);
+
+    }
+
+    public function telefones()
+    {
+        return $this->hasMany(Telefone::class);
+
+    }
+
+    public function secoes()
+    {
+        return $this->belongsToMany(Secao::class, 'secao_user', 'user_id', 'secao_id');
+
+    }
+
+    public function getNomeMilitarAttribute()
+    {
+        $postoGrad = PostoGrad::find($this->posto_grad_id);
+
+        if ($postoGrad) {
+            return $postoGrad->posto_grad . "  " . $this->nome_guerra;
+        } else {
+            return "Não cadastrado";
+        }
+
+    }
+
+    public function vc()
+    {
+        return $this->hasOne(VideoConferencia::class);
+    }
+
+    public function vcresp()
+    {
+        return $this->hasOne(VideoConferencia::class);
+    }
+
+
 
 
 }
