@@ -66,6 +66,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
     // videoconferências
     $router->group(['prefix' => 'vcs'], function () use ($router) {
         $router->get('', 'VideoConferenciaController@index');
+        $router->get('/portipo/{tipo}', 'VideoConferenciaController@porTipo');
         $router->post('', 'VideoConferenciaController@store');
         $router->put('{id}', 'VideoConferenciaController@update');
         $router->delete('{id}', 'VideoConferenciaController@destroy');

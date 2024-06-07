@@ -78,7 +78,7 @@ class UserController extends Controller
     public function createUser(Request $request)
     {
         if ($request['tipoCadastro'] === 'Simplificado') {
-            $usuario=  User::create([
+            $usuario = User::create([
                 'cpf' => $request['cpf'],
                 'password' => Hash::make($request['cpf']),
                 'reset' => 1,
@@ -89,9 +89,9 @@ class UserController extends Controller
 
             return $usuario->load('postograd', 'endereco', 'telefones', 'secoes');
 
-        }  else {
+        } else {
 
-            $usuario=  User::create([
+            $usuario = User::create([
                 'cpf' => $request['cpf'],
                 'data_nasc' => $request['data_nasc'],
                 'data_praca' => $request['data_praca'],
@@ -108,25 +108,25 @@ class UserController extends Controller
 
             $usuario->secoes()->sync($request['secoes']);
 
-            foreach ($request['telCtt'] as $telctt) {
+            foreach ($request['telefones'] as $telctt) {
                 if ($telctt['numero'] !== '' && $telctt['numero'] !== null && $telctt['numero'] !== 'null') {
                     Telefone::create([
-                        'numero'=>$telctt['numero'],
-                        'funcional'=>$telctt['funcional'],
-                        'user_id'=>$usuario->id
+                        'numero' => $telctt['numero'],
+                        'funcional' => $telctt['funcional'],
+                        'user_id' => $usuario->id
                     ]);
                 }
             }
 
             Endereco::create([
-                'rua'=>$request['endereco']['rua'],
-                'numero'=>$request['endereco']['numero'],
-                'complemento'=>$request['endereco']['complemento'],
-                'bairro'=>$request['endereco']['bairro'],
-                'cidade'=>$request['endereco']['cidade'],
-                'estado'=>$request['endereco']['estado'],
-                'cep'=>$request['endereco']['cep'],
-                'user_id'=>$usuario->id,
+                'rua' => $request['endereco']['rua'],
+                'numero' => $request['endereco']['numero'],
+                'complemento' => $request['endereco']['complemento'],
+                'bairro' => $request['endereco']['bairro'],
+                'cidade' => $request['endereco']['cidade'],
+                'estado' => $request['endereco']['estado'],
+                'cep' => $request['endereco']['cep'],
+                'user_id' => $usuario->id,
             ]);
 
             return $usuario->load('postograd', 'endereco', 'telefones', 'secoes');
@@ -139,7 +139,7 @@ class UserController extends Controller
     public function update(int $id, Request $request)
     {
 
-        $usuario = User::find($id);
+        $usuario = User::find($id)->load('postograd', 'endereco', 'telefones', 'secoes');
 
         if (is_null($usuario)) {
             return response()->json([
@@ -148,18 +148,52 @@ class UserController extends Controller
 
         }
 
-        // implementar testes de null nos request do back
-        if ($request['editSenha']) {
-            $usuario->nome = $request['nome'];
-            $usuario->email = $request['email'];
-            $usuario->password = Hash::make($request['password']);
-            $usuario->save();
+        $usuario->cpf = $request['cpf'];
+        $usuario->idt = $request['idt'];
+        $usuario->nome_completo = $request['nome_completo'];
+        $usuario->sexo = $request['sexo'];
+        $usuario->nome_guerra = $request['nome_guerra'];
+        $usuario->posto_grad_id = $request['posto_grad_id'];
+        $usuario->data_nasc = $request['data_nasc'];
+        $usuario->data_praca = $request['data_praca'];
+        $usuario->data_pronto_om = $request['data_pronto_om'];
+        $usuario->email = $request['email'];
+        $usuario->save();
 
-        } else {
-            $usuario->nome = $request['nome'];
-            $usuario->email = $request['email'];
-            $usuario->save();
+
+        $usuario->secoes()->sync($request['secoes']);
+
+        $telefoneIds = $usuario->telefones->pluck('id')->toArray();
+        Telefone::destroy($telefoneIds);
+
+        foreach ($request['telefones'] as $telctt) {
+            if ($telctt['numero'] !== '' && $telctt['numero'] !== null && $telctt['numero'] !== 'null') {
+                Telefone::create([
+                    'numero' => $telctt['numero'],
+                    'funcional' => $telctt['funcional'],
+                    'user_id' => $usuario->id
+                ]);
+            }
         }
+
+        // Atualizar ou criar endereço
+        if ($usuario->endereco) {
+            $endereco = $usuario->endereco;
+        } else {
+            $endereco = new Endereco();
+            $endereco->user_id = $usuario->id; // Defina a relação com o usuário
+        }
+
+        $endereco->rua = $request->input('endereco.rua');
+        $endereco->numero = $request->input('endereco.numero');
+        $endereco->complemento = $request->input('endereco.complemento');
+        $endereco->bairro = $request->input('endereco.bairro');
+        $endereco->cidade = $request->input('endereco.cidade');
+        $endereco->estado = $request->input('endereco.estado');
+        $endereco->cep = $request->input('endereco.cep');
+        $endereco->save();
+
+
 
         return $usuario;
 

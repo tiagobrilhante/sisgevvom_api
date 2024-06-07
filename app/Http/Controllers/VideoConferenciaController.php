@@ -16,6 +16,23 @@ class VideoConferenciaController extends Controller
 
     }
 
+    public function porTipo($tipo)
+    {
+        if ($tipo === 'todas') {
+            return VideoConferencia::orderBy('data', 'ASC')->get()->load('users', 'responsavel');
+        } elseif ($tipo === 'ativas'){
+            return VideoConferencia::whereIn('status', ['Cadastrado', 'Distribuído', 'Adiado', 'Antecipado'])
+                ->orderBy('data', 'asc') // Ordenar em ordem decrescente
+                ->get()
+                ->load('users', 'responsavel');
+        } else {
+            return VideoConferencia::whereIn('status', ['Executado', 'Cancelado'])
+                ->orderBy('data', 'asc')
+                ->get()
+                ->load('users', 'responsavel');
+        }
+    }
+
     public function store(Request $request)
     {
         if ($request['missao'] !== ''
