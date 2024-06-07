@@ -160,4 +160,20 @@ class VideoConferenciaController extends Controller
     {
         return VideoConferencia::whereIn('status', ['Cadastrado', 'Distribuído', 'Adiado', 'Antecipado'] )->orderBy('data', 'ASC')->get()->load('users', 'responsavel');
     }
+
+    // essa pesquisa é para links já usados e locais
+    public function pesquisaTipo(Request $request)
+    {
+        $vcs = VideoConferencia::all();
+        if ($request['tipo'] === 'local') {
+            return VideoConferencia::pluck('local')->unique()->values()->toArray();
+        } else {
+            return VideoConferencia::where('plataforma', $request['plataforma'])
+                ->pluck('link')
+                ->unique()
+                ->values()
+                ->toArray();
+        }
+
+    }
 }
