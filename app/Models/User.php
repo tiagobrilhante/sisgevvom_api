@@ -33,6 +33,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'data_pronto_om',
         'email',
         'reset',
+        'homologado',
+        'om_id'
     ];
 
     protected $table = 'users';
@@ -72,6 +74,12 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     }
 
+    public function funcoes()
+    {
+        return $this->belongsToMany(Funcao::class, 'funcao_user', 'user_id', 'funcao_id');
+
+    }
+
     public function getNomeMilitarAttribute()
     {
         $postoGrad = PostoGrad::find($this->posto_grad_id);
@@ -93,9 +101,6 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     {
         return $this->hasOne(VideoConferencia::class);
     }
-
-
-
 
 }
 

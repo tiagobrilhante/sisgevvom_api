@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSecaosTable extends Migration
+class CreateFuncaosTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,14 @@ class CreateSecaosTable extends Migration
      */
     public function up()
     {
-        Schema::create('secaos', function (Blueprint $table) {
+        Schema::create('funcaos', function (Blueprint $table) {
             $table->id();
-            $table->string('nome')->unique();
-            $table->string('sigla');
-            $table->integer('secao_pai')->nullable();
-            $table->bigInteger('om_id')->unsigned()->index();
+            $table->string('nome');
+            $table->bigInteger('secao_id')->unsigned()->index();
 
-            $table->foreign('om_id')
+            $table->foreign('secao_id')
                 ->references('id')
-                ->on('oms');
+                ->on('secaos');
 
             $table->timestamps();
             $table->softDeletes();
@@ -37,6 +35,6 @@ class CreateSecaosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('secaos');
+        Schema::dropIfExists('funcaos');
     }
 }

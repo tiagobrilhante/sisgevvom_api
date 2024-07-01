@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSecaosTable extends Migration
+class CriarTabelaPermissaos extends Migration
 {
     /**
      * Run the migrations.
@@ -13,22 +13,18 @@ class CreateSecaosTable extends Migration
      */
     public function up()
     {
-        Schema::create('secaos', function (Blueprint $table) {
+        Schema::create('permissaos', function (Blueprint $table) {
             $table->id();
-            $table->string('nome')->unique();
-            $table->string('sigla');
-            $table->integer('secao_pai')->nullable();
-            $table->bigInteger('om_id')->unsigned()->index();
+            $table->string('permissao');
+            $table->bigInteger('funcao_id')->unsigned()->index();
 
-            $table->foreign('om_id')
+            $table->foreign('funcao_id')
                 ->references('id')
-                ->on('oms');
-
+                ->on('funcaos');
             $table->timestamps();
-            $table->softDeletes();
-
         });
     }
+
 
     /**
      * Reverse the migrations.
@@ -37,6 +33,6 @@ class CreateSecaosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('secaos');
+        Schema::dropIfExists('permissaos');
     }
 }

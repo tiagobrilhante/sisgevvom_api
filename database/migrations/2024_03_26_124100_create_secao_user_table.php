@@ -36,6 +36,6 @@ class CreateSecaoUserTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('secaos');
+        Schema::dropIfExists('secao_user');
     }
 }

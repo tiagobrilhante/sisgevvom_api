@@ -18,9 +18,9 @@ class EnderecoSeeder extends Seeder
         DB::table('enderecos')->insert([
                 [
                     'id'=>1,
-                    'rua' => 'Rua A',
-                    'numero' => '123',
-                    'complemento' => 'teste de complemento',
+                    'rua' => 'Rua de Testes',
+                    'numero' => '1234',
+                    'complemento' => 'Complemento Geral',
                     'bairro' => 'São Jorge',
                     'cidade' => 'Manaus',
                     'estado' => 'AM',

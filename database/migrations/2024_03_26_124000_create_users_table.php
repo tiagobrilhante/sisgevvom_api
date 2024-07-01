@@ -16,6 +16,7 @@ class CreateUsersTable extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('cpf')->unique();
+            $table->string('idt')->nullable();
             $table->string('password');
             $table->string('nome_completo')->nullable();
             $table->string('sexo')->nullable();
@@ -29,6 +30,12 @@ class CreateUsersTable extends Migration
             $table->date('data_pronto_om')->nullable()->default(null);
             $table->string('email')->nullable();
             $table->boolean('reset')->default(true);
+            $table->boolean('homologado')->default(false);
+
+            $table->bigInteger('om_id')->unsigned()->index()->nullable();
+            $table->foreign('om_id')
+                ->references('id')
+                ->on('oms')->onDelete('cascade');
 
             $table->timestamps();
             $table->softDeletes();

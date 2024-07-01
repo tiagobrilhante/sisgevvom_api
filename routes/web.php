@@ -32,6 +32,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
 
         $router->get('/problemas', 'UserController@verificaProblemas');
         $router->get('', 'UserController@index');
+        $router->get('/porom/{id}', 'UserController@porOm');
         $router->post('', 'UserController@createUser');
         $router->post('/password/reset', 'UserController@alteraSenhaResetada');
         $router->post('/password/change', 'UserController@alteraSenhaNormal');
@@ -47,9 +48,31 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
     // Secoes
     $router->group(['prefix' => 'secoes'], function () use ($router) {
         $router->get('', 'SecaoController@index');
+        $router->get('/funcoes', 'SecaoController@secoesFuncoes');
+        $router->get('/funcoesom/{id}', 'SecaoController@secoesFuncoesOm');
+        $router->get('/porom/{id}', 'SecaoController@porOm');
         $router->post('', 'SecaoController@store');
         $router->put('{id}', 'SecaoController@update');
         $router->delete('{id}', 'SecaoController@destroy');
+    });
+
+    // Funções
+    $router->group(['prefix' => 'funcoes'], function () use ($router) {
+        $router->get('', 'FuncaoController@index');
+        $router->get('/porom/{id}', 'FuncaoController@porOm');
+        $router->post('', 'FuncaoController@store');
+        $router->put('{id}', 'FuncaoController@update');
+        $router->delete('{id}', 'FuncaoController@destroy');
+    });
+
+    // OMs
+    $router->group(['prefix' => 'oms'], function () use ($router) {
+        $router->get('', 'OmController@index');
+        $router->post('', 'OmController@store');
+        $router->put('{id}', 'OmController@update');
+        $router->delete('{id}', 'OmController@destroy');
+        $router->get('/lepais', 'OmController@getPais');
+        $router->get('/chart/{id}', 'OmController@getChart');
     });
 
     // PostoGrad

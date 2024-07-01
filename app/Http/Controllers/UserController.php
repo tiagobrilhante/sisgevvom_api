@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Endereco;
+use App\Models\Secao;
 use App\Models\Telefone;
 use App\Models\User;
-use App\Models\UserPerfilBasico;
-use App\Models\UserPerfilS;
-use App\Models\UserPerfilSBD;
-use App\Models\UserPerfilSBL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -21,6 +18,22 @@ class UserController extends Controller
     public function index()
     {
         return User::all()->load('postograd', 'endereco', 'telefones', 'secoes');
+    }
+
+    public function porOm($id)
+    {
+        // Primeiro, obtenha as seções com base no om_id
+        $secoes = Secao::where('om_id', $id)->get();
+
+        // Extraia os IDs das seções
+        $secaoIds = $secoes->pluck('id');
+
+        // Agora obtenha os usuários que pertencem a essas seções
+        $users = User::whereHas('secoes', function ($query) use ($secaoIds) {
+            $query->whereIn('secao_id', $secaoIds);
+        })->with('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes')->get();
+
+        return $users;
     }
 
     // retorna se o usuário pode ou não usar o cpf ao se cadastrar / editar
@@ -78,16 +91,29 @@ class UserController extends Controller
     public function createUser(Request $request)
     {
         if ($request['tipoCadastro'] === 'Simplificado') {
+
             $usuario = User::create([
                 'cpf' => $request['cpf'],
+                'om_id' => $request['om_id'],
                 'password' => Hash::make($request['cpf']),
                 'reset' => 1,
             ]);
 
             // Atualizar as secoes
-            $usuario->secoes()->sync($request['secoes']);
+            $secaoIds = array_map(function ($secao) {
+                return $secao['id'];
+            }, $request['secoes']);
 
-            return $usuario->load('postograd', 'endereco', 'telefones', 'secoes');
+            $usuario->secoes()->sync($secaoIds);
+
+            // atualizar as funções
+
+            $arrayFunc = [];
+            foreach ($request['funcoes'] as $funcao) {
+                $arrayFunc[] = $funcao['funcao_id'];
+            }
+
+            $usuario->funcoes()->sync($arrayFunc);
 
         } else {
 
@@ -97,6 +123,7 @@ class UserController extends Controller
                 'data_praca' => $request['data_praca'],
                 'data_pronto_om' => $request['data_pronto_om'],
                 'email' => $request['email'],
+                'om_id' => $request['om_id'],
                 'idt' => $request['idt'],
                 'nome_completo' => $request['nome_completo'],
                 'nome_guerra' => $request['nome_guerra'],
@@ -106,8 +133,22 @@ class UserController extends Controller
                 'reset' => 1,
             ]);
 
-            $usuario->secoes()->sync($request['secoes']);
+            // Atualizar as secoes
+            $secaoIds = array_map(function ($secao) {
+                return $secao['id'];
+            }, $request['secoes']);
 
+            $usuario->secoes()->sync($secaoIds);
+
+            // funções
+            $arrayFunc = [];
+            foreach ($request['funcoes'] as $funcao) {
+                $arrayFunc[] = $funcao['funcao_id'];
+            }
+
+            $usuario->funcoes()->sync($arrayFunc);
+
+            // telefone
             foreach ($request['telefones'] as $telctt) {
                 if ($telctt['numero'] !== '' && $telctt['numero'] !== null && $telctt['numero'] !== 'null') {
                     Telefone::create([
@@ -118,6 +159,7 @@ class UserController extends Controller
                 }
             }
 
+            // endereço
             Endereco::create([
                 'rua' => $request['endereco']['rua'],
                 'numero' => $request['endereco']['numero'],
@@ -129,17 +171,16 @@ class UserController extends Controller
                 'user_id' => $usuario->id,
             ]);
 
-            return $usuario->load('postograd', 'endereco', 'telefones', 'secoes');
-
 
         }
+        return $usuario->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes');
     }
 
     // altera um usuário
     public function update(int $id, Request $request)
     {
 
-        $usuario = User::find($id)->load('postograd', 'endereco', 'telefones', 'secoes');
+        $usuario = User::find($id)->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes');
 
         if (is_null($usuario)) {
             return response()->json([
@@ -194,7 +235,6 @@ class UserController extends Controller
         $endereco->save();
 
 
-
         return $usuario;
 
     }
@@ -225,7 +265,7 @@ class UserController extends Controller
         $user->reset = 1;
         $user->save();
 
-        return $user->load('postograd', 'endereco', 'telefones', 'secoes');
+        return $user->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes');
     }
 
 }

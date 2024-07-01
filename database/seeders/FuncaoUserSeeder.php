@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class SecaoUserSeeder extends Seeder
+class FuncaoUserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -15,20 +15,20 @@ class SecaoUserSeeder extends Seeder
     public function run()
     {
 
-        DB::table('secao_user')->insert([
+        DB::table('funcao_user')->insert([
                 [
                     'id'=>1,
-                    'secao_id' => 5,
+                    'funcao_id' => 3,
                     'user_id' => 1
                 ],
                 [
                     'id'=>2,
-                    'secao_id' => 6,
+                    'funcao_id' => 6,
                     'user_id' => 2
                 ],
                 [
                     'id'=>3,
-                    'secao_id' => 8,
+                    'funcao_id' => 7,
                     'user_id' => 3
                 ],
 
