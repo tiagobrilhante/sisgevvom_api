@@ -18,11 +18,16 @@
 use Laravel\Lumen\Routing\Router;
 
 $router->get('/', function () use ($router) {
-    return '<h1>API SisGeVVOm</h1> <b>Framework da Api:</b> ' . $router->app->version() . '<br> <b>Versão da api:</b> 1.2<br><b>Desenvolvedor: </b> TC Brilhante <br>Todos os Direitos dessa API pertencem ao Exército Brasileiro. <br> Todo o poder emana do código.';
+    return '<h1>API SisGeVVOm</h1> <b>Framework da Api:</b> ' . $router->app->version() . '<br> <b>Versão da api:</b> 1.5<br><b>Desenvolvedor: </b> TC Brilhante <br>Todos os Direitos dessa API pertencem ao Exército Brasileiro. <br> Todo o poder emana do código.';
 });
 
 $router->post('/api/login', 'TokenController@gerarToken');
 $router->get('/api/painelvc', 'VideoConferenciaController@mostraPainel');
+$router->get('/api/postograd', 'PostoGradController@index');
+$router->get('/api/oms', 'OmController@index');
+$router->get('/api/secoes/porom/{id}', 'SecaoController@porOm');
+$router->post('/api/users/autocadastro', 'UserController@autocadastro');
+$router->post('/api/users/cpfnovo/', 'UserController@cpfExistNovo');
 
 // autenticado ...
 $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($router) {
@@ -31,6 +36,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
     $router->group(['prefix' => 'users'], function () use ($router) {
 
         $router->get('/problemas', 'UserController@verificaProblemas');
+        $router->get('/naohomologado', 'UserController@solucionaNaoHomologado');
         $router->get('', 'UserController@index');
         $router->get('/porom/{id}', 'UserController@porOm');
         $router->post('', 'UserController@createUser');
@@ -50,7 +56,6 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
         $router->get('', 'SecaoController@index');
         $router->get('/funcoes', 'SecaoController@secoesFuncoes');
         $router->get('/funcoesom/{id}', 'SecaoController@secoesFuncoesOm');
-        $router->get('/porom/{id}', 'SecaoController@porOm');
         $router->post('', 'SecaoController@store');
         $router->put('{id}', 'SecaoController@update');
         $router->delete('{id}', 'SecaoController@destroy');
@@ -67,7 +72,6 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
 
     // OMs
     $router->group(['prefix' => 'oms'], function () use ($router) {
-        $router->get('', 'OmController@index');
         $router->post('', 'OmController@store');
         $router->put('{id}', 'OmController@update');
         $router->delete('{id}', 'OmController@destroy');
@@ -77,7 +81,9 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
 
     // PostoGrad
     $router->group(['prefix' => 'postograd'], function () use ($router) {
-        $router->get('', 'PostoGradController@index');
+        $router->post('', 'PostoGradController@store');
+        $router->put('{id}', 'PostoGradController@update');
+        $router->delete('{id}', 'PostoGradController@destroy');
     });
 
 

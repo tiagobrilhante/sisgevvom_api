@@ -20,7 +20,7 @@ class TokenController extends Controller
             'password' => 'required'
         ]);
 
-        $user = User::where('cpf', $request['cpf'])->first()->load('secoes', 'postograd');
+        $user = User::where('cpf', $request['cpf'])->first()->load('secoes', 'postograd', 'om', 'funcoes.permissoes');
 
         // Ocultando atributos no modelo principal
         $user->makeHidden([
@@ -51,7 +51,6 @@ class TokenController extends Controller
             'iat' => time(), // Time when JWT was issued.
             //'exp' => time() + 60 * 60 * 60 * 24 // Expiration time
             'exp' => time() + 43200 // Expiration time (12 horas)
-
         ];
 
         $token = JWT::encode($payload, env('JWT_KEY'));

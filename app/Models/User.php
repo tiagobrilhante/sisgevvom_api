@@ -23,6 +23,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      */
     protected $fillable = [
         'cpf',
+        'idt',
         'password',
         'nome_completo',
         'sexo',
@@ -39,7 +40,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     protected $table = 'users';
 
-    protected $appends = ['nomeMilitar'];
+    protected $appends = ['nomeMilitar', 'permissoes'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -56,6 +57,13 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return $this->belongsTo(PostoGrad::class, 'posto_grad_id', 'id');
 
     }
+
+    public function om()
+    {
+        return $this->belongsTo(Om::class);
+
+    }
+
     public function endereco()
     {
         return $this->hasOne(Endereco::class);
@@ -90,6 +98,27 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
             return "Não cadastrado";
         }
 
+    }
+
+    public function getPermissoesAttribute()
+    {
+// Inicializa um array vazio para armazenar as permissões
+        $permissoes = [];
+
+        // Percorre todos os papéis do usuário
+        foreach ($this->funcoes as $func) {
+            // Para cada papel, percorre todas as permissões
+            foreach ($func->permissoes as $permission) {
+                // Adiciona o nome da permissão ao array de permissões
+                $permissoes[] = $permission->permissao;
+            }
+        }
+
+        // Remove duplicatas, caso existam permissões repetidas em diferentes papéis
+        $permissoes = array_unique($permissoes);
+
+        // Retorna o array de permissões
+        return $permissoes;
     }
 
     public function vc()

@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             SecaoUserSeeder::class,
             FuncaoUserSeeder::class,
             EnderecoSeeder::class,
-            ContatoSeeder::class,
             PermissaoSeeder::class,
             TelefoneSeeder::class
         ]);

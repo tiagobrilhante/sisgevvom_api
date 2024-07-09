@@ -17,7 +17,7 @@ class UserController extends Controller
     //lista os usuários
     public function index()
     {
-        return User::all()->load('postograd', 'endereco', 'telefones', 'secoes');
+        return User::all()->load('postograd', 'endereco', 'telefones', 'secoes', 'funcoes', 'om');
     }
 
     public function porOm($id)
@@ -31,7 +31,7 @@ class UserController extends Controller
         // Agora obtenha os usuários que pertencem a essas seções
         $users = User::whereHas('secoes', function ($query) use ($secaoIds) {
             $query->whereIn('secao_id', $secaoIds);
-        })->with('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes')->get();
+        })->with('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes', 'om')->get();
 
         return $users;
     }
@@ -58,6 +58,28 @@ class UserController extends Controller
         }
         return $teste;
     }
+
+
+    public function cpfExistNovo(Request $request)
+    {
+        $teste = User::where('cpf', $request[0])->count();
+
+        $quem = null;
+
+        if ($teste > 0) {
+            $quem = User::where('cpf', $request[0])->first();
+        }
+
+        $retorno = '';
+
+        if ($quem !== null) {
+            $retorno = $quem->nomeMilitar;
+
+        }
+
+        return [$teste, $retorno];
+    }
+
 
     //limpa os . e - de um cpf para resetar senha
     function limpaCPF_CNPJ($valor)
@@ -95,8 +117,9 @@ class UserController extends Controller
             $usuario = User::create([
                 'cpf' => $request['cpf'],
                 'om_id' => $request['om_id'],
-                'password' => Hash::make($request['cpf']),
+                'password' => Hash::make($this->limpaCPF_CNPJ($request['cpf'])),
                 'reset' => 1,
+                'homologado' => 1
             ]);
 
             // Atualizar as secoes
@@ -129,8 +152,9 @@ class UserController extends Controller
                 'nome_guerra' => $request['nome_guerra'],
                 'posto_grad_id' => $request['posto_grad_id'],
                 'sexo' => $request['sexo'],
-                'password' => Hash::make($request['cpf']),
+                'password' => Hash::make($this->limpaCPF_CNPJ($request['cpf'])),
                 'reset' => 1,
+                'homologado' => 1
             ]);
 
             // Atualizar as secoes
@@ -173,14 +197,14 @@ class UserController extends Controller
 
 
         }
-        return $usuario->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes');
+        return $usuario->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes', 'om');
     }
 
     // altera um usuário
     public function update(int $id, Request $request)
     {
 
-        $usuario = User::find($id)->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes');
+        $usuario = User::find($id)->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes', 'om');
 
         if (is_null($usuario)) {
             return response()->json([
@@ -201,8 +225,18 @@ class UserController extends Controller
         $usuario->email = $request['email'];
         $usuario->save();
 
+        $arrayFunc = [];
+        $arraySec = [];
+        foreach ($request['funcoes'] as $funcao) {
+            $arrayFunc[] = $funcao['id'];
+        }
 
-        $usuario->secoes()->sync($request['secoes']);
+        foreach ($request['secoes'] as $secoe) {
+            $arraySec[] = $secoe['id'];
+        }
+
+        $usuario->secoes()->sync($arraySec);
+        $usuario->funcoes()->sync($arrayFunc);
 
         $telefoneIds = $usuario->telefones->pluck('id')->toArray();
         Telefone::destroy($telefoneIds);
@@ -235,7 +269,7 @@ class UserController extends Controller
         $endereco->save();
 
 
-        return $usuario;
+        return $usuario->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes', 'om');
 
     }
 
@@ -265,7 +299,118 @@ class UserController extends Controller
         $user->reset = 1;
         $user->save();
 
-        return $user->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes');
+        return $user->load('postograd', 'endereco', 'telefones', 'secoes.funcoes', 'funcoes', 'om');
+    }
+
+    public function autocadastro(Request $request)
+    {
+
+        if ($this->cpfExistNovoInterno($request['cpf']) === 0) {
+            $usuario = User::create([
+                'cpf' => $request['cpf'],
+                'data_nasc' => $request['data_nasc'],
+                'data_praca' => $request['data_praca'],
+                'data_pronto_om' => $request['data_pronto_om'],
+                'email' => $request['email'],
+                'om_id' => $request['om_id'],
+                'idt' => $request['idt'],
+                'nome_completo' => $request['nome_completo'],
+                'nome_guerra' => $request['nome_guerra'],
+                'posto_grad_id' => $request['posto_grad_id'],
+                'sexo' => $request['sexo'],
+                'password' => Hash::make($request['password']),
+                'reset' => 0,
+                'homologado' => 0
+            ]);
+
+            // Atualizar as secoes
+            $secaoIds = array_map(function ($secao) {
+                return $secao['id'];
+            }, $request['secoes']);
+
+            $usuario->secoes()->sync($secaoIds);
+
+            // funções
+            $arrayFunc = [];
+            foreach ($request['funcoes'] as $funcao) {
+                $arrayFunc[] = $funcao['funcao_id'];
+            }
+
+            $usuario->funcoes()->sync($arrayFunc);
+
+            // telefone
+            foreach ($request['telefones'] as $telctt) {
+                if ($telctt['numero'] !== '' && $telctt['numero'] !== null && $telctt['numero'] !== 'null') {
+                    Telefone::create([
+                        'numero' => $telctt['numero'],
+                        'funcional' => $telctt['funcional'],
+                        'user_id' => $usuario->id
+                    ]);
+                }
+            }
+
+            // endereço
+            Endereco::create([
+                'rua' => $request['endereco']['rua'],
+                'numero' => $request['endereco']['numero'],
+                'complemento' => $request['endereco']['complemento'],
+                'bairro' => $request['endereco']['bairro'],
+                'cidade' => $request['endereco']['cidade'],
+                'estado' => $request['endereco']['estado'],
+                'cep' => $request['endereco']['cep'],
+                'user_id' => $usuario->id,
+            ]);
+        } else {
+            return 'CPF já cadastrado';
+        }
+
+        return 'ok';
+    }
+
+    private function cpfExistNovoInterno($cpf)
+    {
+        return User::where('cpf', $cpf)->count();
+
+    }
+
+    public function solucionaNaoHomologado()
+    {
+
+        $usuariosAdmG = User::where('om_id', Auth::user()->om_id)
+            ->where('id', '!=', Auth::user()->id) // Adiciona esta linha para excluir o usuário autenticado
+            ->whereHas('funcoes.permissoes', function ($query) {
+                $query->where('permissao', 'Administrador Geral');
+            })
+            ->with(['funcoes.permissoes' => function ($query) {
+                $query->where('permissao', 'Administrador Geral');
+            }])
+            ->get();
+
+        $usuariosAdmOm = User::where('om_id', Auth::user()->om_id)
+            ->where('id', '!=', Auth::user()->id) // Adiciona esta linha para excluir o usuário autenticado
+            ->whereHas('funcoes.permissoes', function ($query) {
+                $query->where('permissao', 'Pode Homologar Usuários Om');
+            })
+            ->with(['funcoes.permissoes' => function ($query) {
+                $query->where('permissao', 'Pode Homologar Usuários Om');
+            }])
+            ->get();
+
+
+        $usuariosAdmSec = User::where('om_id', Auth::user()->om_id)
+            ->where('id', '!=', Auth::user()->id) // Adiciona esta linha para excluir o usuário autenticado
+            ->whereHas('funcoes.permissoes', function ($query) {
+                $query->where('permissao', 'Pode Homologar Usuários Seção');
+            })
+            ->with(['funcoes.permissoes' => function ($query) {
+                $query->where('permissao', 'Pode Homologar Usuários Seção');
+            }])
+            ->get();
+
+
+
+        return [$usuariosAdmG, $usuariosAdmOm,$usuariosAdmSec];
+
     }
 
 }

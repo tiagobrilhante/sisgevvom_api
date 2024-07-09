@@ -26,7 +26,7 @@ class SecaoController extends Controller
 
     public function porOm($id)
     {
-        return Secao::where('om_id', $id)->get()->load('funcoes');
+        return Secao::where('om_id', $id)->whereHas('funcoes')->with('funcoes')->get();
     }
 
     public function store(Request $request)
